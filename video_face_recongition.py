@@ -36,9 +36,9 @@ def show_img(img):
         return True
 
 if __name__ == "__main__":
-    face_cascade = cv.CascadeClassifier('C:\opencv\sources\data\lbpcascades\lbpcascade_frontalface_improved.xml')
-    video_name = 'pikaboo.mp4'
-    m_video_capture = cv.VideoCapture(video_name)
+    face_cascade = cv.CascadeClassifier('lbpcascade_frontalface_improved.xml')
+    VIDEO_NAME = 'pikaboo.mp4'
+    m_video_capture = cv.VideoCapture(VIDEO_NAME)
     TOTAL_FRAME = m_video_capture.get(cv.CAP_PROP_FRAME_COUNT)
     while (m_video_capture.get(cv.CAP_PROP_POS_FRAMES) < TOTAL_FRAME):
         img, sec = get_frame(video_capture=m_video_capture, play_speed=10)
