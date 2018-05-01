@@ -2,7 +2,7 @@
 # https://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0
 """
     This code for detect face from video
-    The process is as follows:
+    The process goes:
         1) load the video
         2) capture the one frame from the video
         3) get the area of detected faces in the frame
