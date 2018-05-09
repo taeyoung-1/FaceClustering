@@ -4,6 +4,9 @@
 ### OpenCV ###
 #OpenCV for Mac and Linux
 #build and release folders
+*.mp4
+*.avi
+
 */CMakeFiles
 */CMakeCache.txt
 */Makefile

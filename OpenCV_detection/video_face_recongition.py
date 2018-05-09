@@ -55,7 +55,7 @@ def show_img(img, faces):
 
 if __name__ == "__main__":
     # load video
-    VIDEO_NAME = "pikaboo.mp4"
+    VIDEO_NAME = "jongmin.mp4"
     m_video_capture = cv.VideoCapture(VIDEO_NAME)
 
     m_face_cascade = cv.CascadeClassifier('lbpcascade_frontalface_improved.xml')
