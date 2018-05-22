@@ -50,8 +50,8 @@ def David_Bouldin_index(_centroid, _assignment, _data):
 
     # DB = (1 / num_of_points)
 # detect k in original algorithm
-k = 2
 
+k = 2
 vectors = tf.constant(orbit_arr)
 centroids = tf.Variable(tf.slice(tf.random_shuffle(vectors), [0, 0], [k, -1]))
 expanded_vectors = tf.expand_dims(vectors, 0)
@@ -89,12 +89,12 @@ while True:
     DB = David_Bouldin_index(centroid_values, assignment_values, orbit_arr)
     if (previous_DB < DB):
         break
-print(k - 1)
+
 
 #
-
-vectors = tf.constant(orbit_arr)
 k = k - 1
+print(k)
+vectors = tf.constant(orbit_arr)
 centroids = tf.Variable(tf.slice(tf.random_shuffle(vectors), [0, 0], [k, -1]))
 
 expanded_vectors = tf.expand_dims(vectors, 0)
@@ -112,7 +112,7 @@ init_op = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init_op)
 
-for step in range(100):
+for step in range(1000):
    _, centroid_values, assignment_values = sess.run([update_centroids, centroids, assignments])
 
 data = {"x": [], "y": [], "cluster": []}
