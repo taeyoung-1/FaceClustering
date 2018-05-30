@@ -41,6 +41,24 @@ def David_Bouldin_index(_centroid, _assignment, _data):
     print(result)
     return result
 
+def silhouette(_centroid, _assignment, _points, _i):
+    # function a is mean distance between x(i) and data in same cluster.
+    def a(__i):
+        _cluster = _assignment[__i]
+        _x_point = _points[__i]
+        _same_cluster_points = [p for a,p in zip(_assignment, _points) if a is _cluster]
+        a_val = sum([distance(_s, _x_point) for _s in _same_cluster_points]) / (len(_same_cluster_points) - 1)
+        return a_val
+    # function b is mean distance between x(i) and data in proximate cluster.
+    def b(__i):
+        _cluster = _assignment[__i]
+        _c_list = [distance(d, _centroid[__i]) for d in _centroid if d is not _centroid[__i]]
+        _proximate_cluster = _c_list.index(min(_c_list))
+
+        return
+
+    return b(i) - a(i) / max(a(i), b(i))
+
 
 def cluster_random_points(k_, points_):
     print("k_ is " + str(k_))
