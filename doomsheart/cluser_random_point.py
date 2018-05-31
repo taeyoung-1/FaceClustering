@@ -8,10 +8,10 @@ orbit_arr = []
 x_list = [2, 8]
 y_list = [2, 8]
 sign = [-1, 1]
-for i in range(1000):
+for i in range(10):
     orbit_arr.append(((x_list[(random.randrange(0, 2))] + sign[(random.randrange(0, 2))] * pow(random.random(), 2))
                       , (y_list[(random.randrange(0, 2))] + sign[(random.randrange(0, 2))] * pow(random.random(), 2))))
-
+            
 def distance(pt_1, pt_2):
     return math.sqrt((pt_1[0] - pt_2[0])**2 + (pt_1[1] - pt_2[1])**2)
 
@@ -29,7 +29,7 @@ def David_Bouldin_index(_centroid, _assignment, _data):
     for i in range(num_of_clusters):
         max_value = 0
         for j in range(num_of_clusters):
-            if i is j:
+            if i == j:
                 continue
             else:
                 sig_i = sig_list[i]
@@ -44,24 +44,40 @@ def David_Bouldin_index(_centroid, _assignment, _data):
 def silhouette(_centroid, _assignment, _points, _i):
     # function a is mean distance between x(i) and data in same cluster.
     def a(__i):
-        _cluster = _assignment[__i]
+        _curr_cluster = _assignment[__i]
         _x_point = _points[__i]
-        _same_cluster_points = [p for a,p in zip(_assignment, _points) if a is _cluster]
+        _same_cluster_points = [p for a,p in zip(_assignment, _points) if a == _curr_cluster]
         a_val = sum([distance(_s, _x_point) for _s in _same_cluster_points]) / (len(_same_cluster_points) - 1)
+        # print("a_val is " + str(a_val))
         return a_val
     # function b is mean distance between x(i) and data in proximate cluster.
     def b(__i):
-        _cluster = _assignment[__i]
-        _c_list = [distance(d, _centroid[__i]) for d in _centroid if d is not _centroid[__i]]
-        _proximate_cluster = _c_list.index(min(_c_list))
-
-        return
-
-    return b(i) - a(i) / max(a(i), b(i))
+        _curr_cluster = _assignment[__i]
+        _x_point = _points[__i]
+        _dis_list = [distance(_centroid[_curr_cluster], _c) for _c in _centroid]
+        # print(_dis_list)
+        _proxmiate_cluter = -1
+        _min_dis = sum(_dis_list)
+        for i in range(len(_dis_list)):
+            if (_dis_list[i] != 0) and (_min_dis > _dis_list[i]):
+                _proxmiate_cluter = i
+                _min_dis = _dis_list[i]
+        if _proxmiate_cluter == -1:
+            return 0
+        # print(_curr_cluster, _proxmiate_cluter)
+        _proxmiate_cluster_points = [p for a,p in zip(_assignment, _points) if a == _proxmiate_cluter]
+        b_val = sum([distance(_s, _x_point) for _s in _proxmiate_cluster_points]) / (len(_proxmiate_cluster_points) - 1)
+        return b_val
+    a_i = a(_i)
+    b_i = b(_i)
+    sil = b_i - a_i / max(a_i, b_i)
+    print(a_i,b_i, max(a_i, b_i), sil)
+    
+    # print("silhouette is " + str(sil))
+    return sil
 
 
 def cluster_random_points(k_, points_):
-    print("k_ is " + str(k_))
     vectors_ = tf.constant(points_)
     centroids_ = tf.Variable(tf.slice(tf.random_shuffle(vectors_), [0, 0], [k_, -1]))
     expanded_vectors_ = tf.expand_dims(vectors_, 0)
@@ -73,37 +89,69 @@ def cluster_random_points(k_, points_):
     init_op_ = tf.global_variables_initializer()
     sess_ = tf.Session()
     sess_.run(init_op_)
-    for step_ in range(100):
+    for _ in range(100):
         _, centroid_values_, assignment_values_ = sess_.run([update_centroids_, centroids_, assignments_])
-    return centroid_values_, assignment_values_;
+    return centroid_values_, assignment_values_
 
+def evaluate_cluster(_centroid, _assignment, _data):
+    result = sum([silhouette(_centroid,_assignment,_data,i) for i in range(len(_assignment))]) / len(_assignment)
+    print(result)
+    return result
+
+# # TODO
+# # make algorithm that find accurate cluster and evaluate db value so that find appropriate k
+# k = 3
+# result_cluster = cluster_random_points(k, orbit_arr)
+# while True:
+#     optimized_k_cluster_centroid_and_assignment = cluster_random_points(k, orbit_arr)
+#     for i in range(10):
+#         clustering_result = cluster_random_points(k, orbit_arr)
+#         if David_Bouldin_index(_centroid=optimized_k_cluster_centroid_and_assignment[0],
+#                                _assignment=optimized_k_cluster_centroid_and_assignment[1],
+#                                _data=orbit_arr) \
+#                 > \
+#                 David_Bouldin_index(_centroid=clustering_result[0],
+#                                     _assignment=clustering_result[1],
+#                                     _data=orbit_arr):
+#             optimized_k_cluster_centroid_and_assignment = clustering_result
+#     k += 1
+#     if David_Bouldin_index(_centroid=result_cluster[0],
+#                            _assignment=result_cluster[1],
+#                            _data=orbit_arr) \
+#             < David_Bouldin_index(_centroid=optimized_k_cluster_centroid_and_assignment[0],
+#                                   _assignment=optimized_k_cluster_centroid_and_assignment[1],
+#                                   _data=orbit_arr):
+#         break
+#     else:
+#         result_cluster = optimized_k_cluster_centroid_and_assignment
 
 # TODO
 # make algorithm that find accurate cluster and evaluate db value so that find appropriate k
-k = 3
+# silhouette(_centroid, _assignment, _points, _i):
+k = 1
 result_cluster = cluster_random_points(k, orbit_arr)
 while True:
+    print("k is " + str(k))
     optimized_k_cluster_centroid_and_assignment = cluster_random_points(k, orbit_arr)
+    cluster_evaluated = evaluate_cluster(_centroid=result_cluster[0],
+                                            _assignment=result_cluster[1], _data=orbit_arr)
+    curr_evaluated = cluster_evaluated
     for i in range(10):
         clustering_result = cluster_random_points(k, orbit_arr)
-        if David_Bouldin_index(_centroid=optimized_k_cluster_centroid_and_assignment[0],
-                               _assignment=optimized_k_cluster_centroid_and_assignment[1],
-                               _data=orbit_arr) \
-                > \
-                David_Bouldin_index(_centroid=clustering_result[0],
-                                    _assignment=clustering_result[1],
-                                    _data=orbit_arr):
+        curr_evaluated = evaluate_cluster(_centroid=optimized_k_cluster_centroid_and_assignment[0], 
+                                            _assignment=optimized_k_cluster_centroid_and_assignment[1], _data=orbit_arr)
+        if (cluster_evaluated < curr_evaluated):
+            print("changed. cluster_evaluated is " + str(cluster_evaluated) + " and curr_evaluated is " + str(curr_evaluated))
             optimized_k_cluster_centroid_and_assignment = clustering_result
+            cluster_evaluated = curr_evaluated
     k += 1
-    if David_Bouldin_index(_centroid=result_cluster[0],
-                           _assignment=result_cluster[1],
-                           _data=orbit_arr) \
-            < David_Bouldin_index(_centroid=optimized_k_cluster_centroid_and_assignment[0],
-                                  _assignment=optimized_k_cluster_centroid_and_assignment[1],
-                                  _data=orbit_arr):
+    if cluster_evaluated < evaluate_cluster(_centroid=result_cluster[0],
+                                            _assignment=result_cluster[1], _data=orbit_arr):
         break
     else:
+        print(k)
         result_cluster = optimized_k_cluster_centroid_and_assignment
+        print(cluster_evaluated)
 k -= 2
 print("result k is " + str(k))
 data = {"x": [], "y": [], "cluster": []}
