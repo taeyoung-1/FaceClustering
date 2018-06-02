@@ -12,17 +12,10 @@ for i in range(1000):
     orbit_arr.append(((x_list[(random.randrange(0, 2))] + sign[(random.randrange(0, 2))] * pow(random.random(), 2))
                       , (y_list[(random.randrange(0, 2))] + sign[(random.randrange(0, 2))] * pow(random.random(), 2))))
 
-# df = pd.DataFrame({"x": [v[0] for v in orbit_arr], "y": [v[1] for v in orbit_arr]})
-#
-# sns.lmplot("x", "y", data=df, fit_reg=False, size=6)
-# # plt.show()
-
-
 def distance(pt_1, pt_2):
     return math.sqrt((pt_1[0] - pt_2[0])**2 + (pt_1[1] - pt_2[1])**2)
 
 # DB = (1/n)sum(max((sig_i + sig_j)/ d(c_i, c_j)))
-
 
 def David_Bouldin_index(_centroid, _assignment, _data):
     num_of_clusters = len(_centroid)
@@ -48,79 +41,59 @@ def David_Bouldin_index(_centroid, _assignment, _data):
     print(result)
     return result
 
-    # DB = (1 / num_of_points)
-# detect k in original algorithm
 
-k = 2
-vectors = tf.constant(orbit_arr)
-centroids = tf.Variable(tf.slice(tf.random_shuffle(vectors), [0, 0], [k, -1]))
-expanded_vectors = tf.expand_dims(vectors, 0)
-expanded_centroids = tf.expand_dims(centroids, 1)
-assignments = tf.argmin(tf.reduce_sum(tf.square(tf.subtract(expanded_vectors, expanded_centroids)), 2), 0)
-means = tf.concat([tf.reduce_mean(tf.gather(vectors, tf.reshape(tf.where(tf.equal(assignments, c)), [1, -1]))
-                                  , reduction_indices=[1]) for c in range(k)], 0)
-update_centroids = tf.assign(centroids, means)
-init_op = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init_op)
-for step in range(100):
-    _, centroid_values, assignment_values = sess.run([update_centroids, centroids, assignments])
+def cluster_random_points(k_, points_):
+    print("k_ is " + str(k_))
+    vectors_ = tf.constant(points_)
+    centroids_ = tf.Variable(tf.slice(tf.random_shuffle(vectors_), [0, 0], [k_, -1]))
+    expanded_vectors_ = tf.expand_dims(vectors_, 0)
+    expanded_centroids_ = tf.expand_dims(centroids_, 1)
+    assignments_ = tf.argmin(tf.reduce_sum(tf.square(tf.subtract(expanded_vectors_, expanded_centroids_)), 2), 0)
+    means_ = tf.concat([tf.reduce_mean(tf.gather(vectors_, tf.reshape(tf.where(tf.equal(assignments_, c)), [1, -1]))
+                                      , reduction_indices=[1]) for c in range(k_)], 0)
+    update_centroids_ = tf.assign(centroids_, means_)
+    init_op_ = tf.global_variables_initializer()
+    sess_ = tf.Session()
+    sess_.run(init_op_)
+    for step_ in range(100):
+        _, centroid_values_, assignment_values_ = sess_.run([update_centroids_, centroids_, assignments_])
+    return centroid_values_, assignment_values_;
 
-previous_DB = David_Bouldin_index(centroid_values, assignment_values, orbit_arr)
 
+# TODO
+# make algorithm that find accurate cluster and evaluate db value so that find appropriate k
+k = 3
+result_cluster = cluster_random_points(k, orbit_arr)
 while True:
-    print(centroid_values)
-    print(assignment_values)
+    optimized_k_cluster_centroid_and_assignment = cluster_random_points(k, orbit_arr)
+    for i in range(10):
+        clustering_result = cluster_random_points(k, orbit_arr)
+        if David_Bouldin_index(_centroid=optimized_k_cluster_centroid_and_assignment[0],
+                               _assignment=optimized_k_cluster_centroid_and_assignment[1],
+                               _data=orbit_arr) \
+                > \
+                David_Bouldin_index(_centroid=clustering_result[0],
+                                    _assignment=clustering_result[1],
+                                    _data=orbit_arr):
+            optimized_k_cluster_centroid_and_assignment = clustering_result
     k += 1
-    vectors = tf.constant(orbit_arr)
-    centroids = tf.Variable(tf.slice(tf.random_shuffle(vectors), [0, 0], [k, -1]))
-    expanded_vectors = tf.expand_dims(vectors, 0)
-    expanded_centroids = tf.expand_dims(centroids, 1)
-    assignments = tf.argmin(tf.reduce_sum(tf.square(tf.subtract(expanded_vectors, expanded_centroids)), 2), 0)
-    means = tf.concat([tf.reduce_mean(tf.gather(vectors, tf.reshape(tf.where(tf.equal(assignments, c)), [1, -1]))
-                                      , reduction_indices=[1]) for c in range(k)], 0)
-    update_centroids = tf.assign(centroids, means)
-    init_op = tf.global_variables_initializer()
-    sess = tf.Session()
-    sess.run(init_op)
-    for step in range(100):
-        _, centroid_values, assignment_values = sess.run([update_centroids, centroids, assignments])
-
-    DB = David_Bouldin_index(centroid_values, assignment_values, orbit_arr)
-    if (previous_DB < DB):
+    if David_Bouldin_index(_centroid=result_cluster[0],
+                           _assignment=result_cluster[1],
+                           _data=orbit_arr) \
+            < David_Bouldin_index(_centroid=optimized_k_cluster_centroid_and_assignment[0],
+                                  _assignment=optimized_k_cluster_centroid_and_assignment[1],
+                                  _data=orbit_arr):
         break
-
-
-#
-k = k - 1
-print(k)
-vectors = tf.constant(orbit_arr)
-centroids = tf.Variable(tf.slice(tf.random_shuffle(vectors), [0, 0], [k, -1]))
-
-expanded_vectors = tf.expand_dims(vectors, 0)
-expanded_centroids = tf.expand_dims(centroids, 1)
-
-assignments = tf.argmin(tf.reduce_sum(tf.square(tf.subtract(expanded_vectors, expanded_centroids)), 2), 0)
-
-means = tf.concat([tf.reduce_mean(tf.gather(vectors, tf.reshape(tf.where(tf.equal(assignments, c)), [1, -1]))
-                                  , reduction_indices=[1]) for c in range(k)], 0)
-
-update_centroids = tf.assign(centroids, means)
-
-init_op = tf.global_variables_initializer()
-
-sess = tf.Session()
-sess.run(init_op)
-
-for step in range(1000):
-   _, centroid_values, assignment_values = sess.run([update_centroids, centroids, assignments])
-
+    else:
+        result_cluster = optimized_k_cluster_centroid_and_assignment
+k -= 2
+print("result k is " + str(k))
 data = {"x": [], "y": [], "cluster": []}
-
-for i in range(len(assignment_values)):
+print(result_cluster[1])
+for i in range(len(result_cluster[1])):
     data["x"].append(orbit_arr[i][0])
     data["y"].append(orbit_arr[i][1])
-    data["cluster"].append(assignment_values[i])
+    data["cluster"].append(result_cluster[1][i])
 
 df = pd.DataFrame(data)
 sns.lmplot("x", "y", data=df, fit_reg=False, size=6, hue="cluster", legend=False)
